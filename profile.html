@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        .container {
+            width: 300px;
+            margin: 0 auto;
+            background: linear-gradient(90deg, green, blue);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+        .info {
+            text-align: center;
+        }
+        .info img {
+            width: 100px; /* Adjust size as needed */
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+        .info p {
+            margin: 5px 0;
+        }
+        .info p span {
+            font-weight: bold;
+        }
+        .habilitation {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .habilitation table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .habilitation table, .habilitation th, .habilitation td {
+            border: 1px solid white;
+        }
+        .habilitation th, .habilitation td {
+            padding: 8px;
+            text-align: center;
+        }
+        .habilitation th {
+            background-color: #1b1270;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="IMG_20240813_093519.jpg" alt="Left Image">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR9NFZ3XpYY98phkMXXhYhQ0Wge6_fgddml9A&s" alt="Right Image">
+        </div>
+        
+        <div class="info">
+            <img id="profilePhoto" src="" alt="Photo de profil">
+            <p><span>NOM:</span> <span id="Nom"></span></p>
+            <p><span>PRÉNOM:</span> <span id="Prénom"></span></p>
+            <p><span>SERVICE:</span> <span id="SERVICE"></span></p>
+            <p><span>MATRICULE:</span> <span id="MATRICULE"></span></p>
+            <p><span>NUMÉRO DE TÉLÉPHONE:</span> <span id="NUM DE TELE"></span></p>
+        </div>
+        <div class="habilitation">
+            <h3>LISTE DES HABILITATIONS:</h3>
+            <table id="habilitationTable">
+                <tr>
+                    <th>#</th>
+                    <th>Habilitation</th>
+                    <th>Date d'expiration</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function loadProfile() {
+            const sheetURL = 'https://docs.google.com/spreadsheets/d/1rfBmNu14pN_X4_BbbAaQcqjqVg-PL5HxZbCvfTh2M44/pub?output=csv';
+            fetch(sheetURL)
+                .then(response => response.text())
+                .then(data => {
+                    const rows = data.split('\n').slice(1); // Skip header row
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const matricule = urlParams.get('matricule');
+
+                    let profile = {};
+                    rows.forEach(row => {
+                        const columns = row.split(/,(?![^"]*"(?:(?:[^"]*"){2})*[^"]*$)/);
+                        if (columns.length >= 8 && columns[3] === matricule) { // Assuming photo is the 8th column
+                            profile = {
+                                nom: columns[0],
+                                prenom: columns[1],
+                                service: columns[2],
+                                matricule: columns[3],
+                                numTel: columns[4],
+                                habilitations: columns[5].split(','),
+                                expirationDates: columns[6].split(','),
+                                photo: columns[7] // Assuming photo URL is in the 8th column
+                            };
+                        }
+                    });
+
+                    if (profile.nom) {
+                        document.getElementById('Nom').textContent = profile.nom;
+                        document.getElementById('Prénom').textContent = profile.prenom;
+                        document.getElementById('SERVICE').textContent = profile.service;
+                        document.getElementById('MATRICULE').textContent = profile.matricule;
+                        document.getElementById('NUM DE TELE').textContent = profile.numTel;
+
+                        // Display the photo
+                        document.getElementById('profilePhoto').src = profile.photo;
+
+                        const table = document.getElementById('habilitationTable');
+                        profile.habilitations.forEach((habilitation, index) => {
+                            const newRow = table.insertRow();
+                            const cell1 = newRow.insertCell(0);
+                            const cell2 = newRow.insertCell(1);
+                            const cell3 = newRow.insertCell(2);
+
+                            cell1.textContent = index + 1;
+                            cell2.textContent = habilitation.trim();
+                            cell3.textContent = profile.expirationDates[index] || '';
+                        });
+                    } else {
+                        alert('No profile found for the given matricule.');
+                    }
+                });
+        }
+
+        window.onload = loadProfile;
+    </script>
+</body>
+</html>
